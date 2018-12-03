@@ -34,6 +34,8 @@ class ViewController: UIViewController {
     @IBOutlet weak var startButton: UIButton!
     @IBOutlet weak var tableView: UITableView!
 
+    let kLocationsCollectionName = "locations"
+
     var locationManager: CLLocationManager!
     var listener: ListenerRegistration!
     var isUpdating = false
@@ -88,7 +90,7 @@ class ViewController: UIViewController {
     // Load stored locations on firebase
     fileprivate func loadStoredLocations() {
         let db = Firestore.firestore()
-        db.collection("locations")
+        db.collection(kLocationsCollectionName)
             .order(by: "createdAt", descending: false)
             .getDocuments { [weak self] snapshot, error in
                 if let error = error {
@@ -133,7 +135,7 @@ class ViewController: UIViewController {
     fileprivate func add(location: CLLocation) {
         let db = Firestore.firestore()
         var ref: DocumentReference? = nil
-        ref = db.collection("locations").addDocument(data: [
+        ref = db.collection(kLocationsCollectionName).addDocument(data: [
             "latitude": location.coordinate.latitude,
             "longitude": location.coordinate.longitude,
             "createdAt": FieldValue.serverTimestamp()
@@ -166,6 +168,27 @@ class ViewController: UIViewController {
 
     // Delete all location objects from realm
     fileprivate func deleteAllLocations() {
+        let db = Firestore.firestore()
+        db.collection(kLocationsCollectionName)
+            .getDocuments { snapshot, error in
+                if let error = error {
+                    print("Error getting documents: \(error)")
+                    return
+                }
+                for document in snapshot?.documents ?? [] {
+                    print("Deleting document", document)
+                    db.collection(self.kLocationsCollectionName)
+                        .document(document.documentID)
+                        .delete() { err in
+                            if let err = err {
+                                print("Error removing document: \(err)")
+                            } else {
+                                print("Document successfully removed!")
+                            }
+                    }
+                }
+        }
+
         /*
         // Get the default Realm
         let realm = try! Realm()
