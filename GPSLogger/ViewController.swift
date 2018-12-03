@@ -42,9 +42,7 @@ class ViewController: UIViewController {
 
     var locations: [Location] = [] {
         didSet {
-            if locations.count > 0 {
-                tableView.reloadData()
-            }
+            tableView.reloadData()
         }
     }
 
@@ -83,7 +81,6 @@ class ViewController: UIViewController {
 
     @IBAction func clearButtonDidTap(_ sender: AnyObject) {
         self.deleteAllLocations()
-        self.loadStoredLocations()
         self.removeAllAnnotations()
     }
 
@@ -119,8 +116,8 @@ class ViewController: UIViewController {
 
             // Cloud Firestore Realtime Update
             let db = Firestore.firestore()
-            self.listener = db.collection("locations") //.document("SF")
-                .addSnapshotListener { [weak self] documentSnapshot, error in
+            self.listener = db.collection(kLocationsCollectionName)
+                .addSnapshotListener(includeMetadataChanges: true) { [weak self] documentSnapshot, error in
                     guard let document = documentSnapshot else {
                         print("Error fetching document: \(error!)")
                         return
@@ -188,16 +185,6 @@ class ViewController: UIViewController {
                     }
                 }
         }
-
-        /*
-        // Get the default Realm
-        let realm = try! Realm()
-
-        // Delete all objects from the realm
-        try! realm.write {
-            realm.deleteAll()
-        }
- */
     }
 
     // Drop pin on the map
