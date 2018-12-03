@@ -145,22 +145,35 @@ class ViewController: UIViewController {
         }
     }
 
-    // Delete old (-1 day) objects in a background thread
-    fileprivate func deleteOldLocations() {
-        /*
-        DispatchQueue.global().async {
-            // Get the default Realm
-            let realm = try! Realm()
-
-            // Old Locations stored in Realm
-            let oldLocations = realm.objects(Location.self).filter(NSPredicate(format:"createdAt < %@", NSDate().addingTimeInterval(-86400)))
-
-            // Delete an object with a transaction
-            try! realm.write {
-                realm.delete(oldLocations)
-            }
+    // Delete specific document from collection
+    fileprivate func delete(documentID: String) {
+        let db = Firestore.firestore()
+        db.collection(self.kLocationsCollectionName)
+            .document(documentID)
+            .delete() { err in
+                if let err = err {
+                    print("Error removing document: \(err)")
+                } else {
+                    print("Document successfully removed!")
+                }
         }
- */
+    }
+
+    // Delete old (-1 day) objects
+    fileprivate func deleteOldLocations() {
+        let db = Firestore.firestore()
+        db.collection(kLocationsCollectionName)
+            .whereField("createdAt", isLessThanOrEqualTo: Date().addingTimeInterval(-86400))
+            .getDocuments { snapshot, error in
+                if let error = error {
+                    print("Error getting documents: \(error)")
+                    return
+                }
+                for document in snapshot?.documents ?? [] {
+                    print("Deleting document", document)
+                    self.delete(documentID: document.documentID)
+                }
+        }
     }
 
     // Delete all location objects from realm
@@ -174,15 +187,7 @@ class ViewController: UIViewController {
                 }
                 for document in snapshot?.documents ?? [] {
                     print("Deleting document", document)
-                    db.collection(self.kLocationsCollectionName)
-                        .document(document.documentID)
-                        .delete() { err in
-                            if let err = err {
-                                print("Error removing document: \(err)")
-                            } else {
-                                print("Document successfully removed!")
-                            }
-                    }
+                    self.delete(documentID: document.documentID)
                 }
         }
     }
