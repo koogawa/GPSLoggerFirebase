@@ -1,6 +1,6 @@
-# GPSLoggerRealmSwift
+# GPSLoggerFirebase
 
-GPS Logger with Realm Swift.
+GPS Logger with Firebase.
 
 ![](./Screenshot.png)
 
